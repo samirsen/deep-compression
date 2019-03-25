@@ -5,7 +5,10 @@ import tensorflow as tf
 import pandas as pd
 import math
 
-path = "./BBBC016_v1_images"
+import matplotlib
+import matplotlib.pyplot as plt
+
+path = "./data/BBBC016_v1_images"
 #input_dim = 262144
 input_dim = 20000
 alpha = 0.005
@@ -15,14 +18,13 @@ picture_dim = 128
 
 print("Loading data......")
 cell_images = []
-cell_image_vectors = []
 for filename in os.listdir(path):
     im = Image.open(path + "/" + filename)
     imarray = np.array(im)[:128,:128]
     cell_images.append(imarray.reshape(picture_dim, picture_dim, 1))
-print np.array(cell_images).shape
+print(np.array(cell_images).shape)
 print("Loaded data.")
-    
+
 def get_placeholders():
 	inputs_placeholder = tf.placeholder(tf.float32, (None, picture_dim, picture_dim, 1))
 	labels_placeholder = tf.placeholder(tf.float32, (None, picture_dim, picture_dim, 1))
@@ -47,28 +49,45 @@ def decoder(inputs_batch):
 	output = tf.layers.conv2d(inputs=upsample3, filters=1, kernel_size=(3,3), padding='same', activation=None)
 	return output
 
+def compute_loss(y_hat, labels_batch):
+    for img in y_hat:
+        
+
+    loss = tf.reduce_mean(tf.pow(y_hat - labels_batch, 2))
+    return loss
+
 def get_batches(seq, size=batch_size):
 	return [seq[pos:pos + size] for pos in range(0, len(seq), size)]
+
+def plot_loss(cost_list):
+    plt.title("Generator Loss Curve")
+    plt.plot(cost_list, '-')
+    plt.xlabel('Iterations')
+    plt.ylabel('Loss')
+    plt.show()
 
 def train(X, Y):
 	inputs_batch, labels_batch = get_placeholders()
 	encoding = encoder(inputs_batch)
 	y_hat = decoder(encoding)
-	loss = tf.reduce_mean(tf.pow(y_hat - labels_batch, 2))
+	loss = compute_loss(y_hat, labels_batch)
 	optimizer = tf.train.AdamOptimizer(learning_rate = alpha).minimize(loss)
 	init = tf.global_variables_initializer()
+
+    global curr_iter
 	with tf.Session() as sess:
 		sess.run(init)
+        cost_list = []
 		for iteration in range(num_epochs):
+            curr_iter += 1
 			inputs_batches = get_batches(X)
-			cost_list = []
 			for i in range(len(inputs_batches)):
 				batch = inputs_batches[i]
 				bottleneck, preds, _, curr_loss = sess.run([encoding, y_hat, optimizer, loss], feed_dict={inputs_batch: batch, labels_batch: batch})
 				_, _, total_loss = sess.run([encoding, y_hat, loss], feed_dict={inputs_batch : X, labels_batch : X})
 				print ("Epoch " + str(iteration+1) + ", Update Number " + str(i)+ ", Curr Cost : "  + str(total_loss))
+                cost_list.append(total_loss)
+
+    plot_loss(cost_list)
 
 train(cell_images, cell_images)
-
-
-

@@ -5,7 +5,7 @@ import tensorflow as tf
 import pandas as pd
 import math
 
-path = "./BBBC016_v1_images"
+path = "./data/BBBC016_v1_images"
 #input_dim = 262144
 input_dim = 16384
 hidden_1_dim = 4096
@@ -22,9 +22,9 @@ for filename in os.listdir(path):
     imarray = np.array(im)
     cell_images.append(imarray)
     cell_image_vectors.append(np.ndarray.flatten(imarray)[:input_dim])
-print cell_image_vectors[0].shape
+print (cell_image_vectors[0].shape)
 print("Loaded data.")
-    
+
 def get_placeholders():
 	inputs_placeholder = tf.placeholder(tf.float32, (None, input_dim))
 	labels_placeholder = tf.placeholder(tf.float32, (None, input_dim))
@@ -75,6 +75,3 @@ def train(X, Y):
 				print ("Epoch " + str(iteration+1) + ", Update Number " + str(i)+ ", Curr Cost : "  + str(total_loss))
 
 train(cell_image_vectors, cell_image_vectors)
-
-
-
